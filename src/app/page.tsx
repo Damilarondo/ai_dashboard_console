@@ -87,6 +87,51 @@ function ServiceStatusGrid({ services }: { services?: Record<string, any> }) {
     </div>
   );
 }
+function HealthGauge({ score }: { score: number }) {
+  const radius = 45;
+  const stroke = 8;
+  const normalizedRadius = radius - stroke;
+  const circumference = normalizedRadius * 2 * Math.PI;
+  const color = score > 85 ? 'var(--accent-green)' : score > 60 ? 'var(--accent-yellow)' : 'var(--accent-magenta)';
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ position: 'relative', width: '100px', height: '60px', overflow: 'hidden' }}>
+        <svg height="100" width="100" style={{ transform: 'rotate(-180deg)', position: 'absolute', top: 0, left: 0 }}>
+          <circle
+            stroke="rgba(255,255,255,0.05)"
+            fill="transparent"
+            strokeWidth={stroke}
+            r={normalizedRadius}
+            cx="50"
+            cy="50"
+            style={{ strokeDasharray: `${circumference / 2} ${circumference}` }}
+          />
+          <circle
+            stroke={color}
+            fill="transparent"
+            strokeWidth={stroke}
+            r={normalizedRadius}
+            cx="50"
+            cy="50"
+            style={{ 
+              strokeDasharray: `${(score / 200) * circumference} ${circumference}`,
+              transition: 'stroke-dasharray 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.5s ease',
+              filter: `drop-shadow(0 0 5px ${color}66)`
+            }}
+          />
+        </svg>
+        <div style={{ 
+          position: 'absolute', bottom: '0', width: '100%', textAlign: 'center',
+          fontSize: '1.4rem', fontWeight: 800, color: color, textShadow: `0 0 10px ${color}33`
+        }}>
+          {Math.round(score)}
+        </div>
+      </div>
+      <div style={{ fontSize: '0.6rem', color: 'var(--text-secondary)', textTransform: 'uppercase', marginTop: '6px', letterSpacing: '0.1em' }}>Stability Index</div>
+    </div>
+  );
+}
 
 export default function DashboardPage() {
   const { mode } = useInterface();
@@ -153,6 +198,41 @@ export default function DashboardPage() {
   }, []);
 
   const workflowNodes = ['Detect', 'Analyze', 'Remediate', 'Verify'];
+
+  const calculateHealthScore = () => {
+    let score = 100;
+
+    // 1. Service Uptime (40%)
+    if (latestMetric?.services) {
+      const services = Object.values(latestMetric.services);
+      if (services.length > 0) {
+        const active = services.filter((s: any) => s.status === 'active' || s.status === 'running').length;
+        const serviceScore = (active / services.length) * 40;
+        score = (score - 40) + serviceScore;
+      }
+    }
+
+    // 2. Resource Pressure (30%)
+    if (latestMetric) {
+      const avgLoad = (latestMetric.cpu_percent + latestMetric.memory_percent + latestMetric.disk_percent) / 3;
+      const resourcePenalty = (avgLoad / 100) * 30;
+      score -= resourcePenalty;
+    }
+
+    // 3. Incidents (20%)
+    const unresolved = recentIncidents.filter(inc => inc.status !== 'resolved' && inc.status !== 'rejected').length;
+    score -= Math.min(20, unresolved * 5);
+
+    // 4. ML/UX Bonus/Penalty (10%)
+    if (prediction?.health_score !== undefined) {
+      const mlContribution = (prediction.health_score / 100) * 10;
+      score = (score - 10) + mlContribution;
+    }
+
+    return Math.max(0, Math.min(100, score));
+  };
+
+  const healthScore = calculateHealthScore();
 
   if (mode === 'expert') {
     return (
@@ -239,12 +319,8 @@ export default function DashboardPage() {
           <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>Active Agents</div>
           <div style={{ fontSize: '2rem', fontWeight: 700 }}>{metrics ? `${metrics.agents_online}/${metrics.agents_total || 1}` : '—'}</div>
         </div>
-        <div className="glass-card" style={{ border: prediction?.status === 'warning' ? '1px solid var(--accent-magenta)' : undefined }}>
-          <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px' }}>ML System Health (OCI)</div>
-          <div style={{ fontSize: '2rem', fontWeight: 700, color: prediction?.status === 'warning' ? 'var(--accent-magenta)' : 'var(--accent-green)' }}>
-             {prediction?.health_score !== undefined ? `${prediction.health_score}%` : 'Calc...'}
-          </div>
-          {prediction?.warnings && prediction.warnings.length > 0 && <div style={{ fontSize: '0.65rem', color: 'var(--accent-magenta)', marginTop: '4px' }}>{prediction.warnings[0]}</div>}
+        <div className="glass-card" style={{ padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <HealthGauge score={healthScore} />
         </div>
       </div>
 

@@ -1,4 +1,12 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://localhost:8000';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api` : 'https://localhost:8000/api';
+
+function getHeaders() {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+  };
+}
 
 export interface Incident {
   id: string;
@@ -53,8 +61,31 @@ export interface Agent {
   config: string | null;
 }
 
+async function authenticatedFetch(url: string, options: RequestInit = {}): Promise<Response> {
+  const headers = getHeaders();
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...headers,
+      ...options.headers,
+    },
+  });
+
+  if (res.status === 401) {
+    console.warn("Session expired or unauthorized. Redirecting to login.");
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('user_data');
+      window.location.href = '/login';
+    }
+  }
+  return res;
+}
+
 export async function fetchMetrics(): Promise<Metrics> {
-  const res = await fetch(`${API_URL}/metrics`, { cache: 'no-store' });
+  const res = await authenticatedFetch(`${API_URL}/metrics`, { 
+    cache: 'no-store'
+  });
   return res.json();
 }
 
@@ -62,53 +93,52 @@ export async function fetchIncidents(page = 1, search = '', status = ''): Promis
   const params = new URLSearchParams({ page: String(page), per_page: '20' });
   if (search) params.set('search', search);
   if (status) params.set('status', status);
-  const res = await fetch(`${API_URL}/incidents?${params}`, { cache: 'no-store' });
+  const res = await authenticatedFetch(`${API_URL}/incidents?${params}`, { 
+    cache: 'no-store'
+  });
   return res.json();
 }
 
 export async function fetchIncident(id: string): Promise<Incident> {
-  const res = await fetch(`${API_URL}/incidents/${id}`, { cache: 'no-store' });
+  const res = await authenticatedFetch(`${API_URL}/incidents/${id}`, { 
+    cache: 'no-store'
+  });
   return res.json();
 }
 
 export async function fetchConfig(): Promise<AppConfig> {
-  const res = await fetch(`${API_URL}/config`, { cache: 'no-store' });
+  const res = await authenticatedFetch(`${API_URL}/config`, { 
+    cache: 'no-store'
+  });
   return res.json();
 }
 
 export async function updateConfig(config: Partial<AppConfig>): Promise<AppConfig> {
-  const res = await fetch(`${API_URL}/config`, {
+  const res = await authenticatedFetch(`${API_URL}/config`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(config),
   });
   return (await res.json()).config;
 }
 
 export async function fetchAgents(): Promise<{ agents: Agent[] }> {
-  const res = await fetch(`${API_URL}/agents`, { cache: 'no-store' });
-  return res.json();
-}
-
-export async function fetchSystemMetrics(limit = 50): Promise<SystemMetrics[]> {
-  const res = await fetch(`${API_URL}/metrics/system?limit=${limit}`, { cache: 'no-store' });
-  return res.json();
-}
-
-export async function approveIncident(id: string, action: string, editedCommands?: string) {
-  const res = await fetch(`${API_URL}/incidents/${id}/approve`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ action, edited_commands: editedCommands }),
+  const res = await authenticatedFetch(`${API_URL}/agents`, { 
+    cache: 'no-store'
   });
   return res.json();
 }
 
-export async function injectTest(errorType: string, customLog?: string) {
-  const res = await fetch(`${API_URL}/test`, {
+export async function fetchSystemMetrics(limit = 50): Promise<SystemMetrics[]> {
+  const res = await authenticatedFetch(`${API_URL}/metrics/system?limit=${limit}`, { 
+    cache: 'no-store'
+  });
+  return res.json();
+}
+
+export async function approveIncident(id: string, action: string, editedCommands?: string) {
+  const res = await authenticatedFetch(`${API_URL}/incidents/${id}/approve`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ error_type: errorType, custom_log: customLog }),
+    body: JSON.stringify({ action, edited_commands: editedCommands }),
   });
   return res.json();
 }
