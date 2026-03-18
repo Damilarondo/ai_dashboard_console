@@ -109,4 +109,5 @@ PORT=3001 npm run start
 
 ## License
 
-This project is part of a Final Year Project at the University of Lagos.
+Copyright © 2026 Damilarondo. All rights reserved.  
+This software is proprietary and confidential. Unauthorized copying, distribution, or modification is strictly prohibited.
