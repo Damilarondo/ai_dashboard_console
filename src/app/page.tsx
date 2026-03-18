@@ -158,7 +158,8 @@ export default function DashboardPage() {
     }).catch(console.error);
 
     // WebSocket for live events
-    const ws = createWebSocket();
+    const token = localStorage.getItem('access_token');
+    const ws = createWebSocket(token);
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setEvents(prev => [data, ...prev].slice(0, 50));
@@ -189,9 +190,8 @@ export default function DashboardPage() {
         .catch(console.error);
     }, 10000); // 10s for more "live" feel
 
-    fetch(`${API_URL}/metrics/predictions`)
-       .then(res => res.json())
-       .then(setPrediction)
+    fetchPredictions()
+       .then(data => { if (data && !data.detail) setPrediction(data); })
        .catch(console.error);
 
     return () => { ws.close(); clearInterval(interval); };

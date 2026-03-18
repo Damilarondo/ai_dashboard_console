@@ -1,4 +1,4 @@
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api` : 'https://localhost:8000/api';
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ? `${process.env.NEXT_PUBLIC_API_URL}/api` : 'http://localhost:8000/api';
 
 function getHeaders() {
   const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
@@ -143,7 +143,7 @@ export async function approveIncident(id: string, action: string, editedCommands
   return res.json();
 }
 
-export function createWebSocket(): WebSocket {
+export function createWebSocket(token?: string | null): WebSocket {
   let wsUrl = API_URL;
   if (wsUrl.startsWith('https://')) {
     wsUrl = wsUrl.replace('https://', 'wss://');
@@ -153,5 +153,8 @@ export function createWebSocket(): WebSocket {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     wsUrl = `${protocol}//${window.location.host}${wsUrl}`;
   }
-  return new WebSocket(`${wsUrl}/ws`);
+  // Ensure we don't double up on slashes if API_URL ends in /
+  const finalUrl = wsUrl.endsWith('/') ? `${wsUrl}ws` : `${wsUrl}/ws`;
+  const urlWithToken = token ? `${finalUrl}?token=${encodeURIComponent(token)}` : finalUrl;
+  return new WebSocket(urlWithToken);
 }

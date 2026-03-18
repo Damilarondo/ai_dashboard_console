@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Fragment } from 'react';
 import { fetchIncidents, type Incident } from '@/lib/api';
 
 export default function IncidentsPage() {
@@ -57,7 +57,7 @@ export default function IncidentsPage() {
           </thead>
           <tbody>
             {incidents.map(inc => (
-              <>
+              <Fragment key={inc.id}>
                 <tr key={inc.id} style={{ cursor: 'pointer' }} onClick={() => setExpandedId(expandedId === inc.id ? null : inc.id)}>
                   <td style={{ fontFamily: 'monospace', color: 'var(--accent-cyan)', fontSize: '0.75rem' }}>{inc.id}</td>
                   <td style={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>{new Date(inc.timestamp).toLocaleString()}</td>
@@ -77,7 +77,7 @@ export default function IncidentsPage() {
                 </tr>
                 {expandedId === inc.id && (
                   <tr key={`${inc.id}-detail`}>
-                    <td colSpan={6} style={{ padding: '20px', background: 'var(--bg-primary)' }}>
+                    <td colSpan={7} style={{ padding: '20px', background: 'var(--bg-primary)' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
                         <div>
                           <h3 style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-cyan)', marginBottom: '8px' }}>AI Analysis</h3>
@@ -100,7 +100,7 @@ export default function IncidentsPage() {
                     </td>
                   </tr>
                 )}
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
