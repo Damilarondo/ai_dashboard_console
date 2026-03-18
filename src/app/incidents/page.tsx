@@ -68,7 +68,7 @@ export default function IncidentsPage() {
                     </span>
                   </td>
                   <td style={{ fontFamily: 'monospace' }}>{inc.error_code}</td>
-                  <td>{inc.mttr_seconds.toFixed(0)}s</td>
+                  <td>{inc.status === 'resolved' && inc.mttr_seconds ? `${inc.mttr_seconds.toFixed(0)}s` : '—'}</td>
                   <td>
                     <span className={`badge badge-${inc.status === 'resolved' ? 'resolved' : inc.status === 'failed' ? 'failed' : 'pending'}`}>
                       {inc.status}

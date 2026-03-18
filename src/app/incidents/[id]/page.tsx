@@ -35,7 +35,9 @@ export default function IncidentDetailPage() {
 
   let affected: string[] = [];
   try {
-    affected = incident.affected_services ? JSON.parse(incident.affected_services) : [];
+    if (incident?.affected_services && typeof incident.affected_services === 'string' && incident.affected_services !== 'null') {
+      affected = JSON.parse(incident.affected_services);
+    }
   } catch (e) {
     console.error("Failed to parse affected services", e);
   }
@@ -52,18 +54,18 @@ export default function IncidentDetailPage() {
         </button>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>{incident.id}</h1>
+            <h1 style={{ fontSize: '1.8rem', fontWeight: 700, marginBottom: '8px' }}>{incident?.id || 'Unknown Incident'}</h1>
             <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: 'flex', gap: '16px' }}>
-              <span>Server: <b style={{ color: 'var(--text-primary)' }}>{incident.server}</b></span>
-              <span>Detected: {new Date(incident.timestamp).toLocaleString()}</span>
+              <span>Server: <b style={{ color: 'var(--text-primary)' }}>{incident?.server || 'Unknown'}</b></span>
+              <span>Detected: {incident?.timestamp ? new Date(incident.timestamp).toLocaleString() : 'N/A'}</span>
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <span className={`badge badge-${incident.status === 'resolved' ? 'resolved' : incident.status === 'failed' ? 'failed' : 'pending'}`} style={{ fontSize: '0.9rem', padding: '6px 16px' }}>
-              {incident.status.toUpperCase()}
+            <span className={`badge badge-${incident?.status === 'resolved' ? 'resolved' : incident?.status === 'failed' ? 'failed' : 'pending'}`} style={{ fontSize: '0.9rem', padding: '6px 16px' }}>
+              {(incident?.status || 'detected').toUpperCase()}
             </span>
             <div style={{ marginTop: '12px', fontSize: '1.2rem', fontWeight: 700, color: 'var(--accent-green)' }}>
-              MTTR: {incident.mttr_seconds ? `${incident.mttr_seconds.toFixed(0)}s` : '—'}
+              MTTR: {incident?.mttr_seconds ? `${incident.mttr_seconds.toFixed(0)}s` : '—'}
             </div>
           </div>
         </div>

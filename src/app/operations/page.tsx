@@ -109,27 +109,6 @@ export default function OperationsPage() {
             This prompt is prepended to every AI analysis request. Customize it to tune the AI&apos;s behavior.
           </p>
         </div>
-
-        {/* OCI Resource Orchestration */}
-        <div className="glass-card">
-          <h2 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: '16px', color: 'var(--accent-cyan)' }}>☁️ OCI Resource Orchestration</h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            <div>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Training Compartment OCID</label>
-              <input className="input" placeholder="ocid1.compartment.oc1..xxxx" />
-            </div>
-            <div>
-              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>Object Storage Namespace</label>
-              <input className="input" placeholder="Namespace-ID" />
-            </div>
-            <div style={{ padding: '12px', background: 'rgba(6, 182, 212, 0.05)', borderRadius: '8px', border: '1px solid rgba(6, 182, 212, 0.1)' }}>
-              <p style={{ fontSize: '0.7rem', color: 'var(--accent-cyan)' }}>
-                <strong>OCI SDK Status:</strong> Initialized (Ready for Job Orchestration)
-              </p>
-            </div>
-            <button className="btn btn-ghost" style={{ justifyContent: 'center' }}>Test OCI Connectivity</button>
-          </div>
-        </div>
       </div>
 
       {/* Save Button */}
